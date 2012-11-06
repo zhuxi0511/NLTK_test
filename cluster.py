@@ -2,6 +2,8 @@ import copy
 import numpy
 import random
 import sys
+import math
+from consts import *
 
 from nltk.cluster.util import VectorSpaceClusterer
 from tfidf import TF_IDF
@@ -82,21 +84,38 @@ def my_demo_main(file_list_name, tokenizer_num=0):
     vectors = []
 
     file_count = 1
+    feature_set = set()
     for text in data.texts:
-        vector = [0 for i in range(data._terms_num)]
+        vector = list()
         for term in set(text):
-            vector[data._terms_index[term]] = data.tf_idf(term, text)
+            vector.append((data.tf_idf(term, text), term))
+        vector.sort(key=lambda x:x[0], reverse=True)
+        for term in vector[:TEXTS_TERM_LIMIT]:
+            feature_set.add(term[1])
+
+    print feature_set
+    print len(feature_set)
+    for text in data.texts:
+        vector = list()
+        for term in feature_set:
+            if term in text:
+                vector.append(data.tf_idf(term, text))
+            else:
+                vector.append(0)
+        square_sum = map(lambda x:x*x, vector)
+        square_sum = math.sqrt(sum(square_sum))
+        vector = map(lambda x:x/square_sum, vector)
         vectors += [numpy.array(vector)]
         print file_count
         file_count += 1
 
-    clusterer = GAAClusterer(len(vectors) / 10)
-    clusters = clusterer.cluster(vectors, True, True)
-    print 'gaac', clusters
-
     clusterer = KMeansClusterer(len(vectors) / 10, euclidean_distance, repeats=10)
     clusters = clusterer.cluster(vectors, True, True)
     print 'km', clusters
+
+    clusterer = GAAClusterer(len(vectors) / 10)
+    clusters = clusterer.cluster(vectors, True, True)
+    print 'gaac', clusters
 
 if __name__ == '__main__':
     if sys.argv[1] == 'gaac':
