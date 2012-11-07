@@ -1,1 +1,8 @@
 TEXTS_TERM_LIMIT = 20
+
+GAMMA = 1.01
+BETA = 1.2
+THETA = 1
+PHI = 0.2
+
+INF = 10e9

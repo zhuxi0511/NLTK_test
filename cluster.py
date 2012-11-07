@@ -4,6 +4,7 @@ import random
 import sys
 import math
 from consts import *
+from util import find_max_density
 
 from nltk.cluster.util import VectorSpaceClusterer
 from tfidf import TF_IDF
@@ -90,7 +91,7 @@ def my_demo_main(file_list_name, tokenizer_num=0):
         for term in set(text):
             vector.append((data.tf_idf(term, text), term))
         vector.sort(key=lambda x:x[0], reverse=True)
-        for term in vector[:TEXTS_TERM_LIMIT]:
+        for term in vector[:int(len(vector)*0.15) + 1]:
             feature_set.add(term[1])
 
     print feature_set
@@ -109,13 +110,26 @@ def my_demo_main(file_list_name, tokenizer_num=0):
         print file_count
         file_count += 1
 
-    clusterer = KMeansClusterer(len(vectors) / 10, euclidean_distance, repeats=10)
+    means = find_max_density(vectors, euclidean_distance);
+    print 'means', len(means)
+
+    f = open('result.txt', 'w')
+    clusterer = KMeansClusterer(len(means), euclidean_distance, initial_means=means)
     clusters = clusterer.cluster(vectors, True, True)
-    print 'km', clusters
+    print 'km1', clusters
+    f.write('km1: ' + str(clusters) + '\n')
+
+    clusterer = KMeansClusterer(len(vectors) / 10, euclidean_distance, repeats=10)
+
+    clusters = clusterer.cluster(vectors, True, True)
+    print 'km2', clusters
+    f.write('km2: ' + str(clusters) + '\n')
 
     clusterer = GAAClusterer(len(vectors) / 10)
-    clusters = clusterer.cluster(vectors, True, True)
+    clusters = clusterer.cluster(vectors, True)
     print 'gaac', clusters
+    f.write('gaac: ' + str(clusters) + '\n')
+    f.close()
 
 if __name__ == '__main__':
     if sys.argv[1] == 'gaac':
